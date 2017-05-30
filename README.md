@@ -4,48 +4,51 @@
 
 
 1. Setup SD Card with Arch Linux for Raspberry Pi 3
-https://archlinuxarm.org/platforms/armv8/broadcom/raspberry-pi-3
+	https://archlinuxarm.org/platforms/armv8/broadcom/raspberry-pi-3
 
-Replace sdX in the following instructions with the device name for the SD card as it appears on your computer.
+	Replace sdX in the following instructions with the device name for the SD card as it appears on your computer.
 
-Start fdisk to partition the SD card:
+	Start fdisk to partition the SD card:
 
-	fdisk /dev/sdX
+		fdisk /dev/sdX
+
+	At the fdisk prompt, delete old partitions and create a new one:
+
+		Type o. This will clear out any partitions on the drive.
+		Type p to list partitions. There should be no partitions left.
+		Type n, then p for primary, 1 for the first partition on the drive, press ENTER to accept the default first sector, then type +100M for the last sector.
+		Type t, then c to set the first partition to type W95 FAT32 (LBA).
+		Type n, then p for primary, 2 for the second partition on the drive, and then press ENTER twice to accept the default first and last sector.
+		Write the partition table and exit by typing w.
+	Create and mount the FAT filesystem:
+
+		mkfs.vfat /dev/sdX1
+		mkdir boot
+		mount /dev/sdX1 boot
+
+	Create and mount the ext4 filesystem:
+
+		mkfs.ext4 /dev/sdX2
+		mkdir root
+		mount /dev/sdX2 root
+
+	Download and extract the root filesystem (as root, not via sudo):
 	
-At the fdisk prompt, delete old partitions and create a new one:
-
-	Type o. This will clear out any partitions on the drive.
-	Type p to list partitions. There should be no partitions left.
-	Type n, then p for primary, 1 for the first partition on the drive, press ENTER to accept the default first sector, then type +100M for the last sector.
-	Type t, then c to set the first partition to type W95 FAT32 (LBA).
-	Type n, then p for primary, 2 for the second partition on the drive, and then press ENTER twice to accept the default first and last sector.
-	Write the partition table and exit by typing w.
-Create and mount the FAT filesystem:
-
-	mkfs.vfat /dev/sdX1
-	mkdir boot
-	mount /dev/sdX1 boot
+		wget http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-3-latest.tar.gz
+		bsdtar -xpf ArchLinuxARM-rpi-3-latest.tar.gz -C root
+		sync
+	Move boot files to the first partition:
 	
-Create and mount the ext4 filesystem:
-
-	mkfs.ext4 /dev/sdX2
-	mkdir root
-	mount /dev/sdX2 root
+		mv root/boot/* boot
+		Unmount the two partitions:
+		umount boot root
+	Insert the SD card into the Raspberry Pi, connect ethernet, and apply 5V power.
 	
-Download and extract the root filesystem (as root, not via sudo):
-	wget http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-3-latest.tar.gz
-	bsdtar -xpf ArchLinuxARM-rpi-3-latest.tar.gz -C root
-	sync
-Move boot files to the first partition:
-	mv root/boot/* boot
-	Unmount the two partitions:
-	umount boot root
-Insert the SD card into the Raspberry Pi, connect ethernet, and apply 5V power.
-Use the serial console or SSH to the IP address given to the board by your router.
+	Connect with SSH to your PI with given host or IP	
 	Login as the default user alarm with the password alarm.
 	The default root password is root.
 
-2) Initial system setup
+2. Initial system setup
 	Set locales
 	Unkcomment in /etc/locale.gen
 		en_US.UTF-8 UTF-8
@@ -60,19 +63,19 @@ Use the serial console or SSH to the IP address given to the board by your route
 	Install required packages (expand this list to fit your own preferences)
 		pacman -S vim wget unzip
 
-2.1) 1TB USB drive
-	Format and Mount 1TB USB drive (assume it is partitioned with 1 partition). Replace sdX in the following instructions with the device name for the drive.
-	Create mount point
-		mkdir /mnt/wddrive
-	Format to ext4
-		mkfs.ext4 /dev/sdX1
-	Show drive UUID and copy it
-		blkid
-	Make entry in /etc/fstab
-		UUID=<the copied uuid> /mnt/wddrive ext4 defaults,noatime 0  0
-	Reboot and proof that the drive is mounted 
-		reboot
-		lsblk
+	2. 1TB USB drive
+		Format and Mount 1TB USB drive (assume it is partitioned with 1 partition). Replace sdX in the following instructions with the device name for the drive.
+		Create mount point
+			mkdir /mnt/wddrive
+		Format to ext4
+			mkfs.ext4 /dev/sdX1
+		Show drive UUID and copy it
+			blkid
+		Make entry in /etc/fstab
+			UUID=<the copied uuid> /mnt/wddrive ext4 defaults,noatime 0  0
+		Reboot and proof that the drive is mounted 
+			reboot
+			lsblk
 
 3) Install Nginx, MariaDB, PHP7 (LEMP) on Arch Linux 
 
