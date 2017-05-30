@@ -51,65 +51,82 @@
 2. Initial system setup
 	Set locales
 	Unkcomment in /etc/locale.gen
+	
 		en_US.UTF-8 UTF-8
-
 	generate locales: 
+	
 		locale-gen
 	set timezone	
+	
 		timedatectl set-timezone Europe/Berlin
 
 	Upgrade packages
+	
 		pacman -Syu
 	Install required packages (expand this list to fit your own preferences)
+	
 		pacman -S vim wget unzip
 
-	2. 1TB USB drive
-		Format and Mount 1TB USB drive (assume it is partitioned with 1 partition). Replace sdX in the following instructions with the device name for the drive.
-		Create mount point
-			mkdir /mnt/wddrive
-		Format to ext4
-			mkfs.ext4 /dev/sdX1
-		Show drive UUID and copy it
-			blkid
-		Make entry in /etc/fstab
-			UUID=<the copied uuid> /mnt/wddrive ext4 defaults,noatime 0  0
-		Reboot and proof that the drive is mounted 
-			reboot
-			lsblk
+	2.1 1TB USB drive
+	Format and Mount 1TB USB drive (assume it is partitioned with 1 partition). Replace sdX in the following instructions with the device name for the drive.
+	Create mount point
 
-3) Install Nginx, MariaDB, PHP7 (LEMP) on Arch Linux 
+		mkdir /mnt/wddrive
+	Format to ext4
+
+		mkfs.ext4 /dev/sdX1
+	Show drive UUID and copy it
+
+		blkid
+	Make entry in /etc/fstab
+
+		UUID=<the copied uuid> /mnt/wddrive ext4 defaults,noatime 0  0
+	Reboot and proof that the drive is mounted 
+
+		reboot
+		lsblk
+
+3. Install Nginx, MariaDB, PHP7 (LEMP) on Arch Linux 
 
 	https://www.linuxbabe.com/linux-server/install-lemp-nginx-mariadb-php7-arch-linux-server
 	
-3.1) NGINX
+	3.1 NGINX
 	Install
+
 		pacman -S nginx-mainline
 	Start and enable service
+
 		systemctl start nginx
 		systemctl enable nginx	
 		systemctl status nginx
-	
-		Check if nginx is running, browse to http://<server ip>/
+	Check if nginx is running, browse to http://<server ip>/
 
-3.2) MariaDB
+	3.2 MariaDB
 	Install
+	
 		pacman -S mariadb
 	Initialize the MariaDB data directory prior to starting the service.
+	
 		mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
 	Start and enable service
+	
 		systemctl start mysqld
 		systemctl enable mysqld
 		systemctl status mysqld
 
 	Run the post-installation security script.
+	
 		mysql_secure_installation
 
-3.3) PHP7
+	3.3 PHP7
 	Install
+	
 		pacman -S php-fpm
 	After it’s installed, we need to tell Nginx to run PHP using php-fpm.
+	
 		nano /etc/nginx/nginx.conf
 	Find the location ~ \.php$ section and modify it to the following:
+	
 		location ~ \.php$ {
 		    root           /usr/share/nginx/html;
 		    fastcgi_pass   unix:/run/php-fpm/php-fpm.sock;
@@ -117,66 +134,75 @@
 		    fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
 		    include        fastcgi_params;
 		}
-	
+
 	Then start and enable php-fpm 
+	
 		systemctl start php-fpm
 		systemctl enable php-fpm
 		systemctl status php-fpm
-	
+
 	Test PHP processing
+	
 		echo "<?php phpinfo(); ?>" >> /usr/share/nginx/html/test.php
 		systemctl reload nginx
-		Browse to http://<server ip>/test.php
-
+	
+	Browse to http://<server ip>/test.php
+	
 	Enable extensions
+	
 		vim /etc/php/php.ini
 	Uncomment the following 2 lines
+	
 		;extension=mysqli.so
 		;extension=pdo_mysql.so
 	Reload php-fpm service
-		systemctl reload php-fpm
 	
+		systemctl reload php-fpm
 
 4. Install and Setup Nextcloud Server on Arch Linux
+	#######https://www.linuxbabe.com/cloud-storage/nextcloud-server-arch-linux-nginx-mariadb-php7
+
+	4.1 Install Nextcloud server	
+	Download
 	
-	https://www.linuxbabe.com/cloud-storage/nextcloud-server-arch-linux-nginx-mariadb-php7
+		wget https://download.nextcloud.com/server/releases/latest.zip
 
-  4.1 Install Nextcloud server	
-    Download
-      wget https://download.nextcloud.com/server/releases/latest.zip
-
-    Extract
-      unzip latest.zip -d /usr/share/nginx/
-
-    Give the NGINX user http write permissions
-      chown http:http /usr/share/nginx/nextcloud/ -R
-      chown http:http /mnt/wddrive -R
+	Extract
 	
-  4.2 NC MariaDB setup	
+		unzip latest.zip -d /usr/share/nginx/
 
-    Log into MariaDB database server
-      mysql -u root -p
-      
-    Then create a database for Nextcloud.
-      create database nextcloud;
-      
-    Create the database user. Replace <user> and <password> with your preferred values.
-      create user <user>@localhost identified by '<password>';
-      
-    Grant this user all privileges on the nextcloud database (replace <user> and <password>)
-      grant all privileges on nextcloud.* to <user>@localhost identified by '<password>';
-      
-    Flush the privileges table and exit.
-      flush privileges;
-      exit;
-      
-    Enable Binary Logging in MariaDB
-      In /etc/mysql/my.cnf in the [mysql] section, check if the following 2 lines are there
-         log-bin        = mysql-bin
-          binlog_format  = mixed
-         
-      Restart service
-        systemctl restart mysqld
+	Give the NGINX user http write permissions
+	
+		chown http:http /usr/share/nginx/nextcloud/ -R
+		chown http:http /mnt/wddrive -R
+
+	4.2 NC MariaDB setup	
+
+	Log into MariaDB database server
+	
+		mysql -u root -p
+	Then create a database for Nextcloud.
+	
+		create database nextcloud;
+
+	Create the database user. Replace <user> and <password> with your preferred values.
+	
+		create user <user>@localhost identified by '<password>';
+	Grant this user all privileges on the nextcloud database (replace <user> and <password>)
+	
+		grant all privileges on nextcloud.* to <user>@localhost identified by '<password>';
+	Flush the privileges table and exit.
+	
+		flush privileges;
+		exit;
+	Enable Binary Logging in MariaDB
+	In /etc/mysql/my.cnf in the [mysql] section, check if the following 2 lines are there
+	
+		log-bin        = mysql-bin
+		binlog_format  = mixed
+	Restart service
+	
+		systemctl restart mysqld
 
   4.3 NC NGINX setup
 
