@@ -386,6 +386,7 @@
 	6.3 PHP Caching
 
 	https://wiki.archlinux.org/index.php/PHP#Caching
+	
 	Install the php-apcu package.
 	
 		pacman -S php-apcu
