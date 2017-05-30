@@ -49,26 +49,29 @@
 	The default root password is root.
 
 2. Initial system setup
+
 	Set locales
 	Unkcomment in /etc/locale.gen
-	
+
 		en_US.UTF-8 UTF-8
 	generate locales: 
-	
+
 		locale-gen
 	set timezone	
-	
+
 		timedatectl set-timezone Europe/Berlin
 
 	Upgrade packages
-	
+
 		pacman -Syu
 	Install required packages (expand this list to fit your own preferences)
-	
+
 		pacman -S vim wget unzip
 
 	2.1 1TB USB drive
+	
 	Format and Mount 1TB USB drive (assume it is partitioned with 1 partition). Replace sdX in the following instructions with the device name for the drive.
+	
 	Create mount point
 
 		mkdir /mnt/wddrive
