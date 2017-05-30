@@ -212,18 +212,18 @@
 	
 		systemctl restart mysqld
 
-  4.3 NC NGINX setup
+	4.3 NC NGINX setup
 
-    Create a conf.d directory for individual Nginx config files.
-    
-      mkdir /etc/nginx/conf.d
-      
-    Create a config file for Nextcloud.
-    
-        vim /etc/nginx/conf.d/nextcloud.conf
+	Create a conf.d directory for individual Nginx config files.
 
-    Put the following text into the file:
-                    
+		mkdir /etc/nginx/conf.d
+
+	Create a config file for Nextcloud.
+
+		vim /etc/nginx/conf.d/nextcloud.conf
+
+	Put the following text into the file:
+
 	    upstream php-handler {
 		server unix:/run/php-fpm/php-fpm.sock;
 	    }
@@ -332,16 +332,16 @@
 	      access_log off;
 	       }
 	    }
-    Replace the correct value for the server_name attribute.
+	Replace the correct value for the server_name attribute.
 
-    Next, edit /etc/nginx/nginx.conf file. 
-    Add the following line in the http section so that individual Nginx config files will be loaded.
-    
-      include /etc/nginx/conf.d/*.conf;
+	Next, edit /etc/nginx/nginx.conf file. 
+	Add the following line in the http section so that individual Nginx config files will be loaded.
 
-    Reload service
-    
-      systemctl reload nginx
+		include /etc/nginx/conf.d/*.conf;
+
+	Reload service
+
+		systemctl reload nginx
 5. NC install PHP modules
 	
 	Install
@@ -357,7 +357,7 @@
 		systemctl reload php-fpm
 6. Nextcloud post installation setup
 	
-	6.1. Set PHP environment variables properly
+	6.1 Set PHP environment variables properly
 
 	Uncomment in /etc/php/php-fpm.d/www.conf the following lines
 	
@@ -371,7 +371,7 @@
 	
 		systemctl reload php-fpm
 
-	6.2. HTTP header X-Frame-Options "SAMEORIGIN". (Double set header fields issue).
+	6.2 HTTP header X-Frame-Options "SAMEORIGIN". (Double set header fields issue).
 
 	In file /usr/share/nginx/nextcloud/.htaccess
 
@@ -383,7 +383,7 @@
 	    # add_header X-Content-Type-Options nosniff;
 	    # add_header X-Frame-Options "SAMEORIGIN";
 
-	6.3. PHP Caching
+	6.3 PHP Caching
 
 	https://wiki.archlinux.org/index.php/PHP#Caching
 	Install the php-apcu package.
@@ -410,7 +410,7 @@
 	
 		systemctl restart php-fpm
 		systemctl restart nginx
-	6.4. Use CRON
+	6.4 Use CRON
 	
 	Install
 	
@@ -425,7 +425,7 @@
 		systemctl enable cronie.service
 	Set CRON radio button at Nextcloud Admin page
 
-	6.5. Uploading files up to 16GB 
+	6.5 Uploading files up to 16GB 
 	
 	In /usr/share/nginx/nextcloud/.user.ini
 	
