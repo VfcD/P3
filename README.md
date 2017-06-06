@@ -40,6 +40,7 @@
 		wget http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-3-latest.tar.gz
 		bsdtar -xpf ArchLinuxARM-rpi-3-latest.tar.gz -C root
 		sync
+		
 	Move boot files to the first partition:
 	
 		mv root/boot/* boot
@@ -66,6 +67,7 @@
 	generate locales: 
 
 		locale-gen
+		
 	set timezone	
 
 		timedatectl set-timezone Europe/Berlin
@@ -73,6 +75,7 @@
 	Upgrade packages
 
 		pacman -Syu
+		
 	Install required packages (expand this list to fit your own preferences)
 
 		pacman -S vim wget unzip
@@ -95,9 +98,10 @@
 
 		blkid
 
-	Make entry in /etc/fstab
-
-		UUID=<the copied uuid> /mnt/wddrive ext4 defaults,noatime 0  0
+	Make entry in /etc/fstab edit "HereUUID"
+	
+		nano /etc/fstab
+		UUID=HereUUID /mnt/wddrive ext4 defaults,noatime 0  0
 		
 	Reboot and proof that the drive is mounted 
 
@@ -108,26 +112,30 @@
 
 	https://www.linuxbabe.com/linux-server/install-lemp-nginx-mariadb-php7-arch-linux-server
 	
-	3.1 NGINX
+	3.1 Nginx
 	
 	Install
 
 		pacman -S nginx-mainline
+		
 	Start and enable service
 
 		systemctl start nginx
 		systemctl enable nginx	
 		systemctl status nginx
-	Check if nginx is running, browse to http://<server ip>/
+		
+	Check if nginx is running, browse to http://serverIP/
 
 	3.2 MariaDB
 	
 	Install
 	
 		pacman -S mariadb
+		
 	Initialize the MariaDB data directory prior to starting the service.
 	
 		mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
+		
 	Start and enable service
 	
 		systemctl start mysqld
@@ -143,9 +151,11 @@
 	Install
 	
 		pacman -S php-fpm
+		
 	After it’s installed, we need to tell Nginx to run PHP using php-fpm.
 	
 		nano /etc/nginx/nginx.conf
+		
 	Find the location ~ \.php$ section and modify it to the following:
 	
 		location ~ \.php$ {
@@ -167,18 +177,24 @@
 		echo "<?php phpinfo(); ?>" >> /usr/share/nginx/html/test.php
 		systemctl reload nginx
 	
-	Browse to http://<server ip>/test.php
+	Browse to http://serverIP/test.php
 	
 	Enable extensions
 	
 		vim /etc/php/php.ini
+		
 	Uncomment the following 2 lines
 	
 		;extension=mysqli.so
 		;extension=pdo_mysql.so
+		
 	Reload php-fpm service
 	
 		systemctl reload php-fpm
+		
+	if everything is okay. remove test.php
+		
+		rm /usr/share/nginx/html/test.php
 
 4. Install and Setup Nextcloud Server on Arch Linux
 
@@ -204,30 +220,37 @@
 	Log into MariaDB database server
 	
 		mysql -u root -p
+		
 	Then create a database for Nextcloud.
 	
 		create database nextcloud;
 
-	Create the database user. Replace <user> and <password> with your preferred values.
+	Create the database user. 
+	Replace USER and PASSWORD with your preferred values.
 	
-		create user <user>@localhost identified by '<password>';
-	Grant this user all privileges on the nextcloud database (replace <user> and <password>)
+		create user USER@localhost identified by 'PASSWORD';
+		
+	Grant this user all privileges on the nextcloud database
 	
-		grant all privileges on nextcloud.* to <user>@localhost identified by '<password>';
+		grant all privileges on nextcloud.* to USER@localhost identified by 'PASSWORD';
+		
 	Flush the privileges table and exit.
 	
 		flush privileges;
 		exit;
+		
 	Enable Binary Logging in MariaDB
+	
 	In /etc/mysql/my.cnf in the [mysql] section, check if the following 2 lines are there
 	
 		log-bin        = mysql-bin
 		binlog_format  = mixed
+		
 	Restart service
 	
 		systemctl restart mysqld
 
-	4.3 NC NGINX setup
+	4.3 Nextcloud Nginx setup
 
 	Create a conf.d directory for individual Nginx config files.
 
@@ -237,7 +260,7 @@
 
 		vim /etc/nginx/conf.d/nextcloud.conf
 
-	Put the following text into the file:
+	Put the following text into the file: Replace the correct value for the server_name attribute.
 
 	    upstream php-handler {
 		server unix:/run/php-fpm/php-fpm.sock;
@@ -347,9 +370,12 @@
 	      access_log off;
 	       }
 	    }
-	Replace the correct value for the server_name attribute.
+	    
 
-	Next, edit /etc/nginx/nginx.conf file. 
+	edit /etc/nginx/nginx.conf file. 
+	
+		nano /etc/nginx/nginx.conf
+		
 	Add the following line in the http section so that individual Nginx config files will be loaded.
 
 		include /etc/nginx/conf.d/*.conf;
@@ -357,6 +383,7 @@
 	Reload service
 
 		systemctl reload nginx
+		
 5. NC install PHP modules
 	
 	Install
@@ -365,17 +392,39 @@
 
 	Uncomment the following line in /etc/php/php.ini to enable the module
 	
+		nano etc/php/php.ini
 		;extension=gd.so  
 
 	Reload service
 	
 		systemctl reload php-fpm
+		
+	Now visit serverIP and create a Nextcloud admin, select data path (We recommend to set this path to extern filesystem i.ex. extern hdd), log in with database credentials we've created. here an example:
+	
+		admin account
+		alf_admin1337
+		really_strong_password
+
+		Data folder
+		/mnt/wddrive/nextcloud/data/
+
+		Configure the database
+		nextcloud
+		strong_password
+		nextcloud
+		localhost
+
+	
+	I got a timeout here. 504 bad gateway. reload page. reload the page, log in and wait...
+	
 6. Nextcloud post installation setup
 	
 	6.1 Set PHP environment variables properly
 
 	Uncomment in /etc/php/php-fpm.d/www.conf the following lines
 	
+		nano /etc/php/php-fpm.d/www.conf
+		
 		;env[HOSTNAME] = $HOSTNAME
 		;env[PATH] = /usr/local/bin:/usr/bin:/bin
 		;env[TMP] = /tmp
@@ -390,13 +439,14 @@
 
 	In file /usr/share/nginx/nextcloud/.htaccess
 
-	    Header always set X-Content-Type-Options "nosniff"
-	    Header always set X-Frame-Options "SAMEORIGIN"
+		Header always set X-Content-Type-Options "nosniff"
+		Header always set X-Frame-Options "SAMEORIGIN"
 
 	In file /etc/nginx/conf.d/nextcloud.conf
 
-	    # add_header X-Content-Type-Options nosniff;
-	    # add_header X-Frame-Options "SAMEORIGIN";
+		nano
+		# add_header X-Content-Type-Options nosniff;
+		# add_header X-Frame-Options "SAMEORIGIN";
 
 	6.3 PHP Caching
 
@@ -407,7 +457,8 @@
 		pacman -S php-apcu
 
 	Uncomment in /etc/php/php.ini
-	
+		
+		nano /etc/php/php.ini
 		zend_extension=opcache.so
 
 	Add in /etc/php/php.ini
@@ -419,26 +470,31 @@
 		apc.enable_cli=1
 
 	Add in /usr/share/nginx/nextcloud/config/config.php
-	
+		
+		nano /usr/share/nginx/nextcloud/config/config.php
 		'memcache.local' => '\OC\Memcache\APCu',
 
 	Restart services
 	
 		systemctl restart php-fpm
 		systemctl restart nginx
+		
 	6.4 Use CRON
 	
 	Install
 	
 		pacman -S cronie 
-	Add crontab entry
+		
+	Add crontab entry // attention! vi will open as default editor
 	
 		crontab -u http -e
 		*/15  *  *  *  * php -f /usr/share/nginx/nextcloud/cron.php
+		
 	Start and enable service
 	
 		systemctl start cronie.service
 		systemctl enable cronie.service
+		
 	Set CRON radio button at Nextcloud Admin page
 
 	6.5 Uploading files up to 16GB 
@@ -465,14 +521,17 @@
 
 	In /etc/nginx/nginx.conf
 	
-		client_body_temp_path /mnt/wddrive/upload_tmp_dir
+		client_body_temp_path /mnt/wddrive/upload_tmp_dir;
+		
 	In /etc/nginx/nginx.conf add to PHP location block
 	
 		fastcgi_read_timeout 600;
+		
 	Restart services
 	
 		systemctl restart nginx
 		systemctl restart php-fpm
+		
 	Create upload_tmp_dir on a place with enough free space and set write permission
 	
 		mkdir /mnt/wddrive/upload_tmp_dir
