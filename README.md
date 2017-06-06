@@ -47,15 +47,21 @@
 		umount boot root
 	
 	Insert the SD card into the Raspberry Pi, connect ethernet, and apply 5V power.
+	
 	Connect with SSH to your PI with given host or IP
+	
 	Login as the default user alarm with the password alarm.
+	
 	The default root password is root.
 
 2. Initial system setup
 
 	Set locales
+	
 	Unkcomment in /etc/locale.gen
-
+	
+		nano /etc/locale.gen
+		
 		en_US.UTF-8 UTF-8
 	generate locales: 
 
@@ -73,20 +79,26 @@
 
 	2.1 1TB USB drive
 	
-	Format and Mount 1TB USB drive (assume it is partitioned with 1 partition). Replace sdX in the following instructions with the device name for the drive.
+	Format and Mount 1TB USB drive (assume it is partitioned with 1 partition). 
+	
+	Replace sdX in the following instructions with the device name for the drive.
 	
 	Create mount point
 
 		mkdir /mnt/wddrive
+		
 	Format to ext4
 
 		mkfs.ext4 /dev/sdX1
+		
 	Show drive UUID and copy it
 
 		blkid
+
 	Make entry in /etc/fstab
 
 		UUID=<the copied uuid> /mnt/wddrive ext4 defaults,noatime 0  0
+		
 	Reboot and proof that the drive is mounted 
 
 		reboot
