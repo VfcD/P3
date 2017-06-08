@@ -434,10 +434,6 @@
 
 	6.2 HTTP header X-Frame-Options "SAMEORIGIN". (Double set header fields issue).
 
-	In file /usr/share/nginx/nextcloud/.htaccess
-
-		Header always set X-Content-Type-Options "nosniff"
-		Header always set X-Frame-Options "SAMEORIGIN"
 
 	In file /etc/nginx/conf.d/nextcloud.conf
 
@@ -533,5 +529,83 @@
 
 		mkdir /mnt/wddrive/upload_tmp_dir
 		chown http:http /mnt/wddrive/upload_tmp_dir/ -R
+		
+7) Dynamic DNS with spdns	
+http://my5cent.spdns.de/allgemein/spdns-dynamic-dns-update-client.html	
+
+Get a domain from 
+
+	https://spdyn.de/	
+
+Create a update Token (used in /etc/spdnsu.conf in following steps)
+
+Install base-devel
+
+	pacman -S base-devel	
+	
+Download update client		 
+
+	http://my5cent.spdns.de/wp-content/uploads/2014/12/spdnsUpdater_src.tar.gz
+
+Extract		
+
+	tar -zxvf spdnsUpdater_src.tar.gz	
+	
+Compile the .c file		
+
+	gcc spdnsUpdater.c -o spdnsu		
+	
+"Install on pi" 		
+
+	mv spdnsu.conf /etc/		
+	mkdir updater		
+	mv spdnsu updater/		
+	chmod u+x updater/spdnsu		
+	chown -R alarm:alarm /home/alarm/updater/
+	rm spdnsUpdater.c spdnsUpdater_src.tar.gz	
+	
+Edit the spdnsu.conf file	
+
+	nano /etc/spdnsu.conf	
+
+Example entry, replace `<Host>` with your domain, `<User>` with your spdyn user, `<Token>` with your update token
+
+	[HOST]		
+	updateHost = update.spdyn.de		
+	host = <Host>		
+	user = <User>		
+	pwd  = <Token>		
+	isToken = 1	
+
+Test	
+
+	./updater/spdnsu		
+	cat /tmp/spdnsuIP.cnf	
+	
+Add spdns updater to crontab		
+
+	crontab -u alarm -e			
+	*/10 * * * * /home/alarm/updater/spdnsu
+	
+8) Mass data copy from external drive	
+https://help.nextcloud.com/t/client-sync-issues-after-mass-copy-on-server-disk/10787	
+
+Make sure that NC desktop client is OFF.	
+
+Mount external drive and copy your data to the `/<nextcloud-repo>/<user>/files/directory`
+
+	rsync -Aax /mnt/wdbackup/ /mnt/wddrive/<user>/files/	
+	
+Note that the files are not visible for Nextcloud at the moment. 
+
+Change owner of the directory
+
+	chown -R http:http /mnt/wddrive/<user>/files/<dir>	
+	
+Run the following command and make files visible to Nextcloud
+
+	sudo -u http php /usr/share/nginx/nextcloud/console.php files:scan --all
+
+Note that the Nextcloud desktop client should not resync (or transfer files) because you copied your data from destop sync folder to the Nextcloud user sync folder manually. In our test case different file systems (NTFS on desktop, EXT4 on Nextcloud) was NOT a problem.
 
 > reach me via derbarti gmail com
